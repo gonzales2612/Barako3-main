@@ -23,60 +23,64 @@ class OrderController extends BaseController
     // Show orders and menu items
     public function showOrders()
     {
-        // Fetch all orders with associated menu item names
         $orders = $this->orderModel->getAllOrdersWithMenuNames();
-
-        // Fetch all menu items for the order form
         $menuItems = $this->menuItemModel->getAllMenuItems();
-
-        // Render view with orders and menu items
+        $ordersCountByMonth = $this->orderModel->getOrdersCountByMonth(); // New method
+    
         $template = 'orders';
         $data = [
             'title' => 'OrdersTable',
             'orders' => $orders,
-            'menuItems' => $menuItems
+            'menuItems' => $menuItems,
+            'ordersCountByMonth' => json_encode($ordersCountByMonth) // Ensure this is JSON encoded
         ];
-
+    
         echo $this->render($template, $data);
     }
 
     // Handle the form submission to create a new order
     public function createOrder()
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $customerName = $_POST['customerName'];
-            $menuItemIds = $_POST['menuItemIds']; // An array of selected menu item IDs
+{
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $customerName = $_POST['customerName'];
+        $menuItemIds = $_POST['menuItemIds'] ?? [];
+        $quantities = $_POST['quantities'] ?? [];
+        $orderDate = $_POST['orderDate']; // Capture the selected date
 
-            // Calculate total amount
-            $totalAmount = 0;
-            foreach ($menuItemIds as $menuItemId) {
-                $menuItem = $this->menuItemModel->getMenuItemById($menuItemId);
-                $totalAmount += $menuItem['Price'];
-            }
-
-            // Create the order and get the order ID
-            $orderId = $this->orderModel->createOrder($customerName, $totalAmount);
-
-            // Add each selected menu item to the order
-            foreach ($menuItemIds as $menuItemId) {
-                $menuItem = $this->menuItemModel->getMenuItemById($menuItemId);
-                $subtotal = $menuItem['Price']; // Assuming quantity is 1 for simplicity
-                $this->orderModel->addMenuItemToOrder($orderId, $menuItemId, 1, $subtotal);
-            }
-
-            // Redirect to the orders page after order creation
-            header('Location: /orders');
+        if (empty($menuItemIds)) {
+            echo "No menu items selected. Please select at least one item.";
             exit();
         }
+
+        // Calculate total amount
+        $totalAmount = 0;
+        foreach ($menuItemIds as $menuItemId) {
+            $menuItem = $this->menuItemModel->getMenuItemById($menuItemId);
+            $quantity = $quantities[$menuItemId] ?? 1; // Default to 1 if not set
+            $subtotal = $menuItem['Price'] * $quantity;
+            $totalAmount += $subtotal;
+        }
+
+        // Create the order, including the order date
+        $orderId = $this->orderModel->createOrder($customerName, $totalAmount, $orderDate);
+
+        // Add menu items to the order with quantities
+        foreach ($menuItemIds as $menuItemId) {
+            $menuItem = $this->menuItemModel->getMenuItemById($menuItemId);
+            $quantity = $quantities[$menuItemId];
+            $subtotal = $menuItem['Price'] * $quantity;
+            $this->orderModel->addMenuItemToOrder($orderId, $menuItemId, $quantity, $subtotal);
+        }
+
+        header('Location: /orders');
+        exit();
     }
+}
 
     // Remove order by ID
     public function removeOrder($id)
     {
-        // Delete the order from the database
         $this->orderModel->deleteOrderById($id);
-
-        // Redirect back to the orders page after deletion
         header('Location: /orders');
         exit();
     }

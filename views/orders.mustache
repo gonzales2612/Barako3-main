@@ -3,48 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{title}}</title>
-    <link rel="stylesheet" href="styles.css">
-    <script>
-        // Function to remove the order from the table
-        function removeOrder(orderId) {
-            if (confirm('Are you sure you want to remove this order?')) {
-                window.location.href = '/orders/remove/' + orderId; // Correct URL for order removal
-            }
-        }
-    </script>
+    <title>{{ title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h2>{{title}}</h2>
+<table border="1" id="ordersTable">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Customer Name</th>
+            <th>Order Date</th>
+            <th>Menu Items</th>
+            <th>Total Amount</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#orders}}
+        <tr>
+            <td>{{OrderId}}</td>
+            <td>{{CustomerName}}</td>
+            <td>{{OrderDate}}</td> <!-- Display Order Date -->
+            <td>{{MenuItemNames}}</td>
+            <td>{{TotalAmount}}</td>
+            <td><button onclick="removeOrder({{OrderId}})">Remove</button></td>
+        </tr>
+        {{/orders}}
+    </tbody>
+</table>
 
-    <!-- Table to display orders -->
-    <table border="1" id="ordersTable">
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Customer Name</th>
-                <th>Order Date</th>
-                <th>Menu Items</th>
-                <th>Total Amount</th>
-                <th>Action</th> <!-- Column for the "Complete" button -->
-            </tr>
-        </thead>
-        <tbody>
-            {{#orders}}
-            <tr>
-                <td>{{OrderId}}</td>
-                <td>{{CustomerName}}</td>
-                <td>{{OrderDate}}</td>
-                <td>{{MenuItemNames}}</td> <!-- Display Menu Item Names -->
-                <td>{{TotalAmount}}</td>
-                <td>
-                    <button onclick="removeOrder({{OrderId}})">Remove</button>
-                </td>
-            </tr>
-            {{/orders}}
-        </tbody>
-    </table>
+<!-- Chart Container -->
+<canvas id="ordersChart" width="400" height="200"></canvas> <!-- Larger canvas size -->
 
-    <a href="/menu">Go to Menu</a>
+<!-- Chart Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Pass ordersCountByMonth data from controller to JS as JSON
+    const ordersCountByMonth = {{ordersCountByMonth | json}};
+
+    // Check the data format in the browser console for debugging
+    console.log(ordersCountByMonth);
+
+    // Convert the 'OrderMonth' to month name
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June', 
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    // Update the labels to show month names
+    const labels = ordersCountByMonth.map(order => {
+        const monthIndex = parseInt(order.OrderMonth.split('-')[1], 10) - 1;
+        return monthNames[monthIndex];
+    });
+
+    // Chart data
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: 'Number of Orders per Month',
+            data: ordersCountByMonth.map(order => order.OrderCount),
+            borderColor: 'rgba(75, 192, 192, 1)', // Line color
+            backgroundColor: 'rgba(75, 192, 192, 0.2)', // Fill under the line
+            fill: true, // Fill under the line
+            borderWidth: 2,
+            tension: 0.4 // Smooth curve
+        }]
+    };
+
+    // Chart configuration
+    const config = {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Number of Orders by Month'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    const ctx = document.getElementById('ordersChart').getContext('2d');
+    new Chart(ctx, config);
+});
+</script>
+
+<a href="/menu">Go to Menu</a>
 </body>
 </html>

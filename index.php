@@ -31,6 +31,9 @@ try {
     // For deleting an order
     $router->get('/orders/remove/{id}', '\App\Controllers\OrderController@removeOrder'); // Correct route
 
+    $router->get('/faqs', 'App\Controllers\FaqController@showFaqs');
+
+
     // Run it!
     $router->run();
 } catch (Exception $e) {

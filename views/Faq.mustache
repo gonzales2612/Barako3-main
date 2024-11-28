@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $title ?></title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Frequently Asked Questions (FAQs)</h1>
+
+    <!-- FAQ Table -->
+    <table border="1" id="faqTable">
+        <thead>
+            <tr>
+                <th>Question</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($faqs as $faq): ?> <!-- Loop through the FAQ data -->
+            <tr>
+                <td>{{Question}}</td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <a href="/">Go to Home</a>
+</body>
+</html>
